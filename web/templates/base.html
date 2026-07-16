@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Athenaeum{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="cover">
+    <div class="cover-inner">
+      <a href="{{ url_for('index') }}" class="wordmark">Athenaeum</a>
+      <nav>
+        <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Shelf</a>
+        <a href="{{ url_for('add_book') }}" class="{{ 'active' if request.endpoint == 'add_book' }}">Add a book</a>
+        <a href="{{ url_for('stats') }}" class="{{ 'active' if request.endpoint == 'stats' }}">Stats</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="colophon">
+    <span>Bound locally in SQLite &middot; no server, no cloud, just this machine</span>
+  </footer>
+</body>
+</html>

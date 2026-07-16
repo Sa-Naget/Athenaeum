@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Athenaeum — Stats{% endblock %}
+
+{% block content %}
+  <section class="stats-page">
+    <h1>Ledger</h1>
+
+    <div class="stat-grid">
+      <div class="stat-block">
+        <span class="stat-number">{{ total }}</span>
+        <span class="stat-label">total books</span>
+      </div>
+      {% for row in by_status %}
+      <div class="stat-block">
+        <span class="stat-number">{{ row.c }}</span>
+        <span class="stat-label">{{ row.status.replace('-', ' ') }}</span>
+      </div>
+      {% endfor %}
+      {% if avg_rating %}
+      <div class="stat-block">
+        <span class="stat-number">{{ "%.1f"|format(avg_rating) }}</span>
+        <span class="stat-label">avg rating</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if top_authors %}
+    <h2>Most shelved authors</h2>
+    <ol class="author-list">
+      {% for a in top_authors %}
+        <li><span class="author-name">{{ a.name }}</span><span class="author-count">{{ a.c }}</span></li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+  </section>
+{% endblock %}

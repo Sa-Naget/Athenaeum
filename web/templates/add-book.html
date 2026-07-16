@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Athenaeum — Add a book{% endblock %}
+
+{% block content %}
+  <section class="form-card">
+    <h1>Add a book</h1>
+    <form method="post" action="{{ url_for('add_book') }}">
+      <label>
+        Title
+        <input type="text" name="title" required placeholder="The Left Hand of Darkness">
+      </label>
+      <label>
+        Author
+        <input type="text" name="author" placeholder="Ursula K. Le Guin">
+      </label>
+      <label>
+        ISBN <span class="optional">(optional)</span>
+        <input type="text" name="isbn" placeholder="978-0-441-47812-5">
+      </label>
+      <label>
+        Status
+        <select name="status">
+          <option value="want-to-read">Want to read</option>
+          <option value="reading">Reading</option>
+          <option value="read">Read</option>
+        </select>
+      </label>
+      <label>
+        Tags <span class="optional">(comma-separated)</span>
+        <input type="text" name="tags" placeholder="sci-fi, favorites">
+      </label>
+      <button type="submit" class="primary-btn">Shelve it</button>
+    </form>
+  </section>
+{% endblock %}
