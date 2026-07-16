@@ -23,11 +23,11 @@ Only one place knows the schema: `core/db.py`. Both `athenaeum_cli.py` and `app.
 
 **Terminal:**
 ```
-python cli/athenaeum_cli.py init
-python cli/athenaeum_cli.py add-book "Piranesi" --author "Susanna Clarke"
-python cli/athenaeum_cli.py list
-python cli/athenaeum_cli.py search "darkness"
-python cli/athenaeum_cli.py stats
+python cli/athe-cli.py init
+python cli/athe-cli.py add-book "Piranesi" --author "Susanna Clarke"
+python cli/athe-cli.py list
+python cli/athe-cli.py search "darkness"
+python cli/athe-cli.py stats
 ```
 
 **Website:**
