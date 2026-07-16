@@ -1,5 +1,8 @@
 library.db
+
 __pycache__/
 *.pyc
+
 .venv/
 .vscode/settings.json
+.hintrc
