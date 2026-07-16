@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Athenaeum — Shelf{% endblock %}
+
+{% block content %}
+  <section class="shelf-head">
+    <h1>Your shelf</h1>
+    <form class="search-form" method="get" action="{{ url_for('index') }}">
+      <input type="text" name="q" value="{{ search }}" placeholder="Search titles &amp; authors&hellip;">
+      <button type="submit">Search</button>
+    </form>
+  </section>
+
+  <nav class="filter-tabs">
+    <a href="{{ url_for('index') }}" class="{{ 'active' if not active_status }}">
+      All <span class="count">{{ total }}</span>
+    </a>
+    <a href="{{ url_for('index', status='want-to-read') }}" class="{{ 'active' if active_status == 'want-to-read' }}">
+      Want to read <span class="count">{{ counts.get('want-to-read', 0) }}</span>
+    </a>
+    <a href="{{ url_for('index', status='reading') }}" class="{{ 'active' if active_status == 'reading' }}">
+      Reading <span class="count">{{ counts.get('reading', 0) }}</span>
+    </a>
+    <a href="{{ url_for('index', status='read') }}" class="{{ 'active' if active_status == 'read' }}">
+      Read <span class="count">{{ counts.get('read', 0) }}</span>
+    </a>
+  </nav>
+
+  {% if all_tags %}
+  <div class="tag-row">
+    <span class="tag-row-label">tags:</span>
+    {% for t in all_tags %}
+      <a href="{{ url_for('index', tag=t) }}" class="tag-chip {{ 'active' if active_tag == t }}">{{ t }}</a>
+    {% endfor %}
+    {% if active_tag %}
+      <a href="{{ url_for('index') }}" class="tag-chip clear">clear ×</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if books %}
+    <ul class="book-list">
+      {% for book in books %}
+        <li class="book-card {{ book.spine }}">
+          <div class="spine-stripe"></div>
+          <div class="book-main">
+            <div class="book-title-row">
+              <span class="book-title">{{ book.title }}</span>
+              {% if book.rating %}
+                <span class="book-rating">{{ '★' * book.rating }}{{ '☆' * (5 - book.rating) }}</span>
+              {% endif %}
+            </div>
+            <div class="book-meta">
+              <span class="book-author">{{ book.author or "unknown author" }}</span>
+              {% if book.tags %}
+                <span class="book-tags">
+                  {% for t in book.tags %}<span class="tag-chip small">{{ t }}</span>{% endfor %}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="book-actions">
+            <form method="post" action="{{ url_for('update_status', book_id=book.id) }}" class="status-form">
+              <select name="status" onchange="this.form.submit()">
+                <option value="want-to-read" {{ 'selected' if book.status == 'want-to-read' }}>Want to read</option>
+                <option value="reading" {{ 'selected' if book.status == 'reading' }}>Reading</option>
+                <option value="read" {{ 'selected' if book.status == 'read' }}>Read</option>
+              </select>
+            </form>
+            <form method="post" action="{{ url_for('delete_book', book_id=book.id) }}" onsubmit="return confirm('Remove this book?');">
+              <button type="submit" class="ghost-btn">Remove</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <p>Nothing here yet.</p>
+      <a href="{{ url_for('add_book') }}" class="cta-link">Add your first book →</a>
+    </div>
+  {% endif %}
+{% endblock %}
