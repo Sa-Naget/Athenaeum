@@ -165,7 +165,7 @@ def index():
         for row in db.execute("SELECT status, COUNT(*) AS c FROM books GROUP BY status")
     }
     return render_template(
-        "index.html",
+        "Index.html",
         books=books,
         active_status=status,
         active_tag=tag,
@@ -203,7 +203,7 @@ def add_book():
         db.commit()
         return redirect(url_for("index"))
 
-    return render_template("add_book.html")
+    return render_template("add-book.html")
 
 
 @app.route("/books/<int:book_id>/status", methods=["POST"])
@@ -249,7 +249,7 @@ def stats():
         "SELECT AVG(rating) AS avg_rating FROM books WHERE rating IS NOT NULL"
     ).fetchone()["avg_rating"]
     return render_template(
-        "stats.html",
+        "status.html",
         total=total,
         by_status=by_status,
         top_authors=top_authors,
