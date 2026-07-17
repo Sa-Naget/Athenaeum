@@ -42,20 +42,47 @@
       {% for book in books %}
         <li class="book-card {{ book.spine }}">
           <div class="spine-stripe"></div>
-          <div class="book-main">
-            <div class="book-title-row">
-              <span class="book-title">{{ book.title }}</span>
-              {% if book.rating %}
-                <span class="book-rating">{{ '★' * book.rating }}{{ '☆' * (5 - book.rating) }}</span>
+          <div class="book-body">
+            <div class="book-cover">
+              {% if book.cover_filename %}
+                <img
+                  class="cover-img"
+                  src="{{ url_for('static', filename='covers/' + book.cover_filename) }}"
+                  alt=""
+                  loading="lazy"
+                  onerror="this.style.display='none'; this.nextElementSibling.classList.add('show');"
+                >
+              {% elif book.isbn %}
+                <img
+                  class="cover-img"
+                  src="https://covers.openlibrary.org/b/isbn/{{ book.isbn }}-M.jpg"
+                  alt=""
+                  loading="lazy"
+                  onload="if(this.naturalWidth<=1){this.style.display='none'; this.nextElementSibling.classList.add('show');}"
+                  onerror="this.style.display='none'; this.nextElementSibling.classList.add('show');"
+                >
               {% endif %}
+              <div class="cover-fallback {{ 'show' if not book.cover_filename and not book.isbn }}">{{ book.title[0]|upper }}</div>
             </div>
-            <div class="book-meta">
-              <span class="book-author">{{ book.author or "unknown author" }}</span>
-              {% if book.tags %}
-                <span class="book-tags">
-                  {% for t in book.tags %}<span class="tag-chip small">{{ t }}</span>{% endfor %}
-                </span>
-              {% endif %}
+            <div class="book-main">
+              <div class="book-title-row">
+                <a href="{{ url_for('edit_book', book_id=book.id) }}" class="book-title">{{ book.title }}</a>
+                <form method="post" action="{{ url_for('rate_book', book_id=book.id) }}" class="star-form">
+                  {% for i in range(5, 0, -1) %}
+                    <button type="submit" name="rating" value="{{ i }}"
+                            class="star-btn {{ 'filled' if book.rating and i <= book.rating }}"
+                            aria-label="Rate {{ i }} star{{ 's' if i > 1 }}">★</button>
+                  {% endfor %}
+                </form>
+              </div>
+              <div class="book-meta">
+                <span class="book-author">{{ book.author or "unknown author" }}</span>
+                {% if book.tags %}
+                  <span class="book-tags">
+                    {% for t in book.tags %}<span class="tag-chip small">{{ t }}</span>{% endfor %}
+                  </span>
+                {% endif %}
+              </div>
             </div>
           </div>
           <div class="book-actions">
@@ -66,6 +93,7 @@
                 <option value="read" {{ 'selected' if book.status == 'read' }}>Read</option>
               </select>
             </form>
+            <a href="{{ url_for('edit_book', book_id=book.id) }}" class="ghost-btn edit-link">Edit</a>
             <form method="post" action="{{ url_for('delete_book', book_id=book.id) }}" onsubmit="return confirm('Remove this book?');">
               <button type="submit" class="ghost-btn">Remove</button>
             </form>

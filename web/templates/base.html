@@ -11,7 +11,13 @@
 <body>
   <header class="cover">
     <div class="cover-inner">
-      <a href="{{ url_for('index') }}" class="wordmark">Athenaeum</a>
+      <a href="{{ url_for('index') }}" class="wordmark">
+        <svg class="wordmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M4 19c4-1 6-3 6-8V5c-4 1-6 4-6 8v6z"/>
+          <path d="M20 19c-4-1-6-3-6-8V5c4 1 6 4 6 8v6z"/>
+        </svg>
+        Athenaeum
+      </a>
       <nav>
         <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Shelf</a>
         <a href="{{ url_for('add_book') }}" class="{{ 'active' if request.endpoint == 'add_book' }}">Add a book</a>

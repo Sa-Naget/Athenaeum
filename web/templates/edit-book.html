@@ -4,7 +4,7 @@
 {% block content %}
   <section class="form-card">
     <h1>Edit book</h1>
-    <form method="post" action="{{ url_for('edit_book', book_id=book.id) }}">
+    <form method="post" action="{{ url_for('edit_book', book_id=book.id) }}" enctype="multipart/form-data">
       <label>
         Title
         <input type="text" name="title" required value="{{ book.title }}">
@@ -14,9 +14,27 @@
         <input type="text" name="author" value="{{ book.author or '' }}">
       </label>
       <label>
-        ISBN <span class="optional">(optional)</span>
+        ISBN <span class="optional">(optional — used to fetch a cover if you don't upload one)</span>
         <input type="text" name="isbn" value="{{ book.isbn or '' }}">
       </label>
+      <label>
+        Cover image
+        {% if book.cover_filename %}
+          <span class="optional">(currently set — choose a new file to replace it)</span>
+        {% else %}
+          <span class="optional">(optional)</span>
+        {% endif %}
+        {% if book.cover_filename %}
+          <img class="cover-preview" src="{{ url_for('static', filename='covers/' + book.cover_filename) }}" alt="">
+        {% endif %}
+        <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif">
+      </label>
+      {% if book.cover_filename %}
+      <label class="checkbox-row">
+        <input type="checkbox" name="remove_cover" value="1">
+        Remove current cover
+      </label>
+      {% endif %}
       <label>
         Status
         <select name="status">

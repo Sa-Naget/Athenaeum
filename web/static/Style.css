@@ -50,6 +50,19 @@ a { color: inherit; text-decoration: none; }
   font-size: 1.6rem;
   letter-spacing: 0.01em;
   color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wordmark-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--gold);
+  animation: glow 3s ease-in-out infinite;
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; filter: drop-shadow(0 0 4px rgba(201, 162, 39, 0.5)); }
 }
 nav { display: flex; gap: 22px; }
 nav a {
@@ -127,6 +140,7 @@ h2 {
   font-family: var(--font-body);
 }
 .search-form button:hover { background: var(--gold); color: var(--cover); }
+.search-form button:active { transform: scale(0.96); }
 
 /* Filter tabs */
 .filter-tabs {
@@ -172,7 +186,9 @@ h2 {
   border-radius: 999px;
   border: 1px solid rgba(201, 162, 39, 0.35);
   color: var(--muted);
+  transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
+.tag-chip:active { transform: scale(0.94); }
 .tag-chip:hover { color: var(--ink-light); border-color: var(--gold); }
 .tag-chip.active { background: var(--gold); color: var(--cover); border-color: var(--gold); }
 .tag-chip.clear { border-color: var(--maroon); color: var(--maroon); }
@@ -193,6 +209,11 @@ h2 {
   gap: 14px;
 }
 
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .book-card {
   background: var(--parchment);
   border-radius: 4px;
@@ -200,15 +221,67 @@ h2 {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: riseIn 0.4s ease both;
 }
+.book-card:hover {
+  transform: translateY(-5px) rotate(-0.6deg);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+}
+.book-list .book-card:nth-child(1) { animation-delay: 0.03s; }
+.book-list .book-card:nth-child(2) { animation-delay: 0.08s; }
+.book-list .book-card:nth-child(3) { animation-delay: 0.13s; }
+.book-list .book-card:nth-child(4) { animation-delay: 0.18s; }
+.book-list .book-card:nth-child(5) { animation-delay: 0.23s; }
+.book-list .book-card:nth-child(n+6) { animation-delay: 0.28s; }
 
-.spine-stripe { width: 100%; height: 6px; }
+.spine-stripe { width: 100%; height: 6px; transition: filter 0.25s ease; }
+.book-card:hover .spine-stripe { filter: brightness(1.3); }
 
 .spine-gold .spine-stripe { background: var(--gold); }
 .spine-maroon .spine-stripe { background: var(--maroon); }
 .spine-teal .spine-stripe { background: var(--teal); }
 
-.book-main { padding: 16px 16px 10px; }
+.book-body {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+.book-cover {
+  position: relative;
+  width: 56px;
+  aspect-ratio: 2 / 3;
+  flex-shrink: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(36,26,18,0.15);
+}
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.book-card:hover .cover-img { transform: scale(1.05); }
+.cover-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--parchment);
+}
+.cover-fallback.show { display: flex; }
+.spine-gold .cover-fallback { background: var(--gold); }
+.spine-maroon .cover-fallback { background: var(--maroon); }
+.spine-teal .cover-fallback { background: var(--teal); }
+
+.book-main { padding: 0; flex: 1; min-width: 0; }
 
 .book-title-row {
   display: flex;
@@ -221,13 +294,32 @@ h2 {
   font-weight: 600;
   font-size: 1.08rem;
   color: var(--ink);
+  transition: color 0.15s ease;
 }
-.book-rating {
-  color: var(--gold);
-  font-size: 0.85rem;
-  letter-spacing: 1px;
+.book-title:hover { color: var(--maroon); text-decoration: underline; }
+
+.star-form {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 1px;
   flex-shrink: 0;
 }
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: rgba(36, 26, 18, 0.25);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.star-btn.filled { color: var(--gold); }
+.star-form .star-btn:hover,
+.star-form .star-btn:hover ~ .star-btn {
+  color: var(--gold);
+}
+.star-btn:hover { transform: scale(1.2); }
 .book-meta {
   margin-top: 5px;
   display: flex;
@@ -242,11 +334,22 @@ h2 {
 .book-tags .tag-chip.small { color: var(--ink-soft); background: rgba(36,26,18,0.06); }
 
 .book-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border-left: none;
   border-top: 1px solid rgba(36,26,18,0.1);
   padding: 10px 16px;
   justify-content: space-between;
 }
+.status-form { flex-shrink: 0; }
+.edit-link {
+  font-size: 0.78rem;
+  color: var(--teal);
+  opacity: 0.85;
+  cursor: pointer;
+}
+.edit-link:hover { opacity: 1; text-decoration: underline; }
 .status-form select {
   font-family: var(--font-body);
   font-size: 0.8rem;
@@ -317,6 +420,27 @@ h2 {
   background: white;
   color: var(--ink);
 }
+.form-card input[type="file"] {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+.cover-preview {
+  width: 72px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  margin-bottom: 4px;
+}
+.checkbox-row {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.checkbox-row input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+}
 .primary-btn {
   margin-top: 6px;
   background: var(--maroon);
@@ -331,6 +455,20 @@ h2 {
   transition: background 0.15s ease;
 }
 .primary-btn:hover { background: #5f221c; }
+.primary-btn:active { transform: scale(0.97); }
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+.cancel-link {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+.cancel-link:hover { opacity: 1; text-decoration: underline; }
 
 /* Stats page */
 .stat-grid {
@@ -388,6 +526,12 @@ h2 {
   font-family: var(--font-mono);
 }
 
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--cover); }
+::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.35); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201, 162, 39, 0.55); }
+
 /* Responsive */
 @media (max-width: 600px) {
   .book-card { flex-direction: column; }
@@ -402,7 +546,7 @@ h2 {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }
 
 /* Focus visibility */

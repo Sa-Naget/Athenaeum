@@ -4,7 +4,7 @@
 {% block content %}
   <section class="form-card">
     <h1>Add a book</h1>
-    <form method="post" action="{{ url_for('add_book') }}">
+    <form method="post" action="{{ url_for('add_book') }}" enctype="multipart/form-data">
       <label>
         Title
         <input type="text" name="title" required placeholder="The Left Hand of Darkness">
@@ -14,8 +14,12 @@
         <input type="text" name="author" placeholder="Ursula K. Le Guin">
       </label>
       <label>
-        ISBN <span class="optional">(optional)</span>
+        ISBN <span class="optional">(optional — used to fetch a cover if you don't upload one)</span>
         <input type="text" name="isbn" placeholder="978-0-441-47812-5">
+      </label>
+      <label>
+        Cover image <span class="optional">(optional)</span>
+        <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif">
       </label>
       <label>
         Status
