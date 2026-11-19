@@ -155,6 +155,14 @@ def tag_book(conn, book_id, tag_name):
     except sqlite3.IntegrityError:
         return False
 
+def untag_book(conn, book_id, tag_name):
+    cur = conn.execute(
+        "DELETE FROM book_tags WHERE book_id = ? "
+        "AND tag_id = (SELECT id FROM tags WHERE name = ?)",
+        (book_id, tag_name.strip()),
+    )
+    conn.commit()
+    return cur.rowcount > 0
 
 def list_books(conn, status=None, author=None, tag=None, newest_first=False):
     query = """
