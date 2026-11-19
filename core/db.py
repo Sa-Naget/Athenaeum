@@ -184,6 +184,10 @@ def list_books(conn, status=None, author=None, tag=None, newest_first=False):
     return conn.execute(query, params).fetchall()
 
 
+def _fts_query(raw):
+    terms = [t.replace('"', '""') for t in raw.split()]
+    return " ".join('"{t}"' for t in terms)
+
 def search_books(conn, search_query):
     query = """
         SELECT b.id, b.title, a.name AS author, b.status, b.rating,
@@ -197,16 +201,31 @@ def search_books(conn, search_query):
         GROUP BY b.id
         ORDER BY b.id DESC
     """
-    return conn.execute(query, (search_query,)).fetchall()
+    match = _fts_query(search_query)
+    if not match:
+        return []
+    return conn.execute(query, (match,)).fetchall()
 
 
 def all_tags(conn):
     return [r["name"] for r in conn.execute("SELECT name FROM tags ORDER BY name")]
 
 
+def _apply_status(conn, book_id, status):
+    if status == "read":
+        conn.execute(
+            "UPDATE books SET status = ?, finished_date = COALESCE(finished_date, datetime('now')) WHERE id = ?",
+            (status, book_id),
+        )
+    else:
+        conn.execute(
+            "UPDATE books SET status = ?, finished_date = NULL WHERE id = ?",
+            (status, book_id),
+        )
+
+
 def update_status(conn, book_id, status):
-    finished_clause = ", finished_date = datetime('now')" if status == "read" else ""
-    conn.execute(f"UPDATE books SET status = ?{finished_clause} WHERE id = ?", (status, book_id))
+    _apply_status(conn, book_id, status)
     conn.commit()
 
 
@@ -222,11 +241,11 @@ def delete_book(conn, book_id):
 def update_book(conn, book_id, title, author_name=None, isbn=None,
                 status="reading", rating=None, tags=None):
     author_id = get_or_create_author(conn, author_name) if author_name else None
-    finished_clause = ", finished_date = datetime('now)" if status == "read" else ""
     conn.execute(
-        f"UPDATE books SET title = ?, author_id = ?, isbn = ?, status = ?, rating = ?{finished_clause} WHERE id = ?",
-        (title, author_id, isbn, status, rating, book_id),
+        f"UPDATE books SET title = ?, author_id = ?, isbn = ?, rating = ? WHERE id = ?",
+        (title, author_id, isbn, rating, book_id),
     )
+    _apply_status(conn, book_id, status)
     conn.execute("DELETE FROM book_tags WHERE book_id = ?", (book_id,))
     for tag_name in tags or []:
         tag_id = get_or_create_tag(conn, tag_name)

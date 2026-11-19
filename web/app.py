@@ -163,6 +163,7 @@ def rate_book(book_id):
 @app.route("/books/<int:book_id>/delete", methods=["POST"])
 def delete_book(book_id):
     core_db.delete_book(get_db(), book_id)
+    remove_existing_cover_files(book_id)
     return redirect(request.referrer or url_for("index"))
 
 
