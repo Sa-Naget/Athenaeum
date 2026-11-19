@@ -5,35 +5,53 @@
   <section class="form-card">
     <h1>Add a book</h1>
     <form method="post" action="{{ url_for('add_book') }}" enctype="multipart/form-data">
-      <label>
-        Title
-        <input type="text" name="title" required placeholder="The Left Hand of Darkness">
-      </label>
-      <label>
-        Author
-        <input type="text" name="author" placeholder="Ursula K. Le Guin">
-      </label>
-      <label>
-        ISBN <span class="optional">(optional — used to fetch a cover if you don't upload one)</span>
-        <input type="text" name="isbn" placeholder="978-0-441-47812-5">
-      </label>
-      <label>
-        Cover image <span class="optional">(optional)</span>
-        <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif">
-      </label>
-      <label>
-        Status
-        <select name="status">
-          <option value="want-to-read">Want to read</option>
-          <option value="reading">Reading</option>
-          <option value="read">Read</option>
-        </select>
-      </label>
-      <label>
-        Tags <span class="optional">(comma-separated)</span>
-        <input type="text" name="tags" placeholder="sci-fi, favorites">
-      </label>
-      <button type="submit" class="primary-btn">Shelve it</button>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="title">Title</label>
+          <input type="text" id="title" name="title" required placeholder="The Left Hand of Darkness">
+        </div>
+        <div class="field">
+          <label class="field-label" for="author">Author</label>
+          <input type="text" id="author" name="author" placeholder="Ursula K. Le Guin">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="isbn">ISBN
+          <br>
+          <span class="optional">(this is optional, will be used to fetch a cover when you don't upload one)</span></label>
+        <input type="text" id="isbn" name="isbn" placeholder="9780441478125">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Cover image <span class="optional">(optional)</span></span>
+        <label class="dropzone">
+          <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif" data-cover-input>
+          <img class="dropzone-preview" alt="" hidden>
+          <span class="dropzone-text">You can drop them and or choose 'em</span>
+          <span class="dropzone-hint">png, jpg, webp or gif, up to you, so long as its not 5MB big</span>
+        </label>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Status</span>
+        <div class="pills" role="radiogroup" aria-label="Status">
+          <label class="pill"><input type="radio" name="status" value="want-to-read" checked><span>Want to read</span></label>
+          <label class="pill"><input type="radio" name="status" value="reading"><span>Reading</span></label>
+          <label class="pill"><input type="radio" name="status" value="read"><span>Read</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="tag-entry">Tags <span class="optional">(press enter or comma after each to separate them)</span></label>
+        <div class="tag-input" data-tag-input>
+          <span class="tag-chips"></span>
+          <input type="text" id="tag-entry" placeholder="sci-fi, favorites" autocomplete="off">
+        </div>
+        <input type="hidden" name="tags" value="">
+      </div>
+
+      <button type="submit" class="primary-btn">Put me in the Shelf!</button>
     </form>
   </section>
 {% endblock %}

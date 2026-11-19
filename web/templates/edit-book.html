@@ -5,59 +5,68 @@
   <section class="form-card">
     <h1>Edit book</h1>
     <form method="post" action="{{ url_for('edit_book', book_id=book.id) }}" enctype="multipart/form-data">
-      <label>
-        Title
-        <input type="text" name="title" required value="{{ book.title }}">
-      </label>
-      <label>
-        Author
-        <input type="text" name="author" value="{{ book.author or '' }}">
-      </label>
-      <label>
-        ISBN <span class="optional">(optional — used to fetch a cover if you don't upload one)</span>
-        <input type="text" name="isbn" value="{{ book.isbn or '' }}">
-      </label>
-      <label>
-        Cover image
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="title">Title</label>
+          <input type="text" id="title" name="title" required value="{{ book.title }}">
+        </div>
+        <div class="field">
+          <label class="field-label" for="author">Author</label>
+          <input type="text" id="author" name="author" value="{{ book.author or '' }}">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="isbn">ISBN <span class="optional">(this is optional, will be used to fetch a cover when you don't upload one)</span></label>
+        <input type="text" id="isbn" name="isbn" value="{{ book.isbn or '' }}">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Cover image <span class="optional">(optional)</span></span>
+        <label class="dropzone">
+          <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif" data-cover-input>
+          <img class="dropzone-preview" alt="" {% if book.cover_filename %}src="{{ url_for('static', filename='covers/' + book.cover_filename) }}"{% else %}hidden{% endif %}>
+          <span class="dropzone-text">{% if book.cover_filename %}You can drop a new one to change them and or choose 'em{% else %}You can drop them and or choose 'em{% endif %}</span>
+          <span class="dropzone-hint">png, jpg, webp or gif, up to you, so long as its not 5MB big</span>
+        </label>
         {% if book.cover_filename %}
-          <span class="optional">(currently set — choose a new file to replace it)</span>
-        {% else %}
-          <span class="optional">(optional)</span>
+        <label class="checkbox-row">
+          <input type="checkbox" name="remove_cover" value="1">
+          Remove current cover?
+        </label>
         {% endif %}
-        {% if book.cover_filename %}
-          <img class="cover-preview" src="{{ url_for('static', filename='covers/' + book.cover_filename) }}" alt="">
-        {% endif %}
-        <input type="file" name="cover" accept="image/png, image/jpeg, image/webp, image/gif">
-      </label>
-      {% if book.cover_filename %}
-      <label class="checkbox-row">
-        <input type="checkbox" name="remove_cover" value="1">
-        Remove current cover
-      </label>
-      {% endif %}
-      <label>
-        Status
-        <select name="status">
-          <option value="want-to-read" {{ 'selected' if book.status == 'want-to-read' }}>Want to read</option>
-          <option value="reading" {{ 'selected' if book.status == 'reading' }}>Reading</option>
-          <option value="read" {{ 'selected' if book.status == 'read' }}>Read</option>
-        </select>
-      </label>
-      <label>
-        Rating
-        <select name="rating">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Status</span>
+        <div class="pills" role="radiogroup" aria-label="Status">
+          <label class="pill"><input type="radio" name="status" value="want-to-read" {{ 'checked' if book.status == 'want-to-read' }}><span>Want to read</span></label>
+          <label class="pill"><input type="radio" name="status" value="reading" {{ 'checked' if book.status == 'reading' }}><span>Reading</span></label>
+          <label class="pill"><input type="radio" name="status" value="read" {{ 'checked' if book.status == 'read' }}><span>Read</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="rating">Rating</label>
+        <select id="rating" name="rating">
           <option value="">Unrated</option>
           {% for i in range(1, 6) %}
             <option value="{{ i }}" {{ 'selected' if book.rating == i }}>{{ i }} star{{ 's' if i > 1 }}</option>
           {% endfor %}
         </select>
-      </label>
-      <label>
-        Tags <span class="optional">(comma-separated)</span>
-        <input type="text" name="tags" value="{{ tags }}" placeholder="sci-fi, favorites">
-      </label>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="tag-entry">Tags <span class="optional">(press enter or comma after each to separate them)</span></label>
+        <div class="tag-input" data-tag-input>
+          <span class="tag-chips"></span>
+          <input type="text" id="tag-entry" placeholder="sci-fi, favorites" autocomplete="off">
+        </div>
+        <input type="hidden" name="tags" value="{{ tags }}">
+      </div>
+
       <div class="form-actions">
-        <button type="submit" class="primary-btn">Save changes</button>
+        <button type="submit" class="primary-btn">Put me back!</button>
         <a href="{{ url_for('index') }}" class="cancel-link">Cancel</a>
       </div>
     </form>
