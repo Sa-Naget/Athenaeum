@@ -186,7 +186,7 @@ def list_books(conn, status=None, author=None, tag=None, newest_first=False):
 
 def _fts_query(raw):
     terms = [t.replace('"', '""') for t in raw.split()]
-    return " ".join('"{t}"' for t in terms)
+    return " ".join(f'"{t}"' for t in terms)
 
 def search_books(conn, search_query):
     query = """
