@@ -110,7 +110,7 @@ First time here? Get going with three commands:
     python athe-cli.py list
  
 Run `python athe-cli.py <command> -h` for detailed help and examples
-on any individual command (e.g. `python athe-cli.py add-book -h`) ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧
+on any individual command (e.g. `python athe-cli.py add-book -h`) ദ്ദി(˵•̀ ᴗ -˵ ) ✧
 """
  
 EPILOG = """\

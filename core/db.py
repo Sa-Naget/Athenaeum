@@ -156,9 +156,9 @@ def tag_book(conn, book_id, tag_name):
         return False
 
 
-def list_books(conn, status=None, author=None, tag=None):
+def list_books(conn, status=None, author=None, tag=None, newest_first=False):
     query = """
-        SELECT b.id, b.title, a.name AS author, b.status, b.rating,
+        SELECT b.id, b.title, b.isbn, b.cover_filename, a.name AS author, b.status, b.rating,
                GROUP_CONCAT(DISTINCT t.name) AS tags
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.id
@@ -179,7 +179,8 @@ def list_books(conn, status=None, author=None, tag=None):
             JOIN tags t2 ON bt2.tag_id = t2.id WHERE t2.name = ?
         )"""
         params.append(tag)
-    query += " GROUP BY b.id ORDER BY b.id"
+    order = "DESC" if newest_first else "ASC"
+    query += f" GROUP BY b.id ORDER BY b.id {order}"
     return conn.execute(query, params).fetchall()
 
 

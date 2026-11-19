@@ -83,44 +83,12 @@ def get_or_create_tag(db, name):
 
 def fetch_books(db, status=None, tag=None, search=None):
     if search:
-        query = """
-            SELECT b.id, b.title, b.isbn, b.cover_filename, a.name AS author, b.status, b.rating,
-                   GROUP_CONCAT(DISTINCT t.name) AS tags
-            FROM books_fts
-            JOIN books b ON books_fts.rowid = b.id
-            LEFT JOIN authors a ON b.author_id = a.id
-            LEFT JOIN book_tags bt ON b.id = bt.book_id
-            LEFT JOIN tags t ON bt.tag_id = t.id
-            WHERE books_fts MATCH ?
-            GROUP BY b.id
-            ORDER BY b.id DESC
-        """
-        rows = db.execute(query, (search,)).fetchall()
+        rows = core_db.search_books(db, search)
     else:
-        query = """
-            SELECT b.id, b.title, b.isbn, b.cover_filename, a.name AS author, b.status, b.rating,
-                   GROUP_CONCAT(DISTINCT t.name) AS tags
-            FROM books b
-            LEFT JOIN authors a ON b.author_id = a.id
-            LEFT JOIN book_tags bt ON b.id = bt.book_id
-            LEFT JOIN tags t ON bt.tag_id = t.id
-            WHERE 1=1
-        """
-        params = []
-        if status:
-            query += " AND b.status = ?"
-            params.append(status)
-        if tag:
-            query += """ AND b.id IN (
-                SELECT bt2.book_id FROM book_tags bt2
-                JOIN tags t2 ON bt2.tag_id = t2.id WHERE t2.name = ?
-            )"""
-            params.append(tag)
-        query += " GROUP BY b.id ORDER BY b.id DESC"
-        rows = db.execute(query, params).fetchall()
+        rows = core_db.list_books(db, status=status, tag=tag, newest_first=True)
 
     books = []
-    for i, r in enumerate(rows):
+    for r in rows:
         d = dict(r)
         d["tags"] = d["tags"].split(",") if d["tags"] else []
         d["spine"] = SPINE_COLORS[r["id"] % len(SPINE_COLORS)]
