@@ -219,6 +219,50 @@ def delete_book(conn, book_id):
     conn.execute("DELETE FROM books WHERE id = ?", (book_id,))
     conn.commit()
 
+def update_book(conn, book_id, title, author_name=None, isbn=None,
+                status="reading", rating=None, tags=None):
+    author_id = get_or_create_author(conn, author_name) if author_name else None
+    finished_clause = ", finished_date = datetime('now)" if status == "read" else ""
+    conn.execute(
+        f"UPDATE books SET title = ?, author_id = ?, isbn = ?, status = ?, rating = ?{finished_clause} WHERE id = ?",
+        (title, author_id, isbn, status, rating, book_id),
+    )
+    conn.execute("DELETE FROM book_tags WHERE book_id = ?", (book_id,))
+    for tag_name in tags or []:
+        tag_id = get_or_create_tag(conn, tag_name)
+        conn.execute(
+            "INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)",
+            (book_id, tag_id),
+        )
+    conn.commit()
+
+def set_cover(conn, book_id, filename):
+    conn.execute("UPDATE books SET cover_filename = ? WHERE id = ?", (filename, book_id))
+    conn.commit()
+
+def get_book(conn, book_id):
+    return conn.execute(
+        """
+        SELECT b.id, b.title, b.isbn. b.cover_filename, b.status, b.rating, a.name AS author
+        FROM books b LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.id = ?
+        """,
+        (book_id,),
+    ).fetchone()
+
+def get_book_tags(conn, book_id):
+    return [
+        r["name"] for r in conn.execute(
+            "SELECT t.name FROM tags t JOIN book_tags bt ON t.id = bt.tag_id WHERE bt.book_id = ?",
+            (book_id,),
+        )
+    ]
+
+def status_counts(conn):
+    return {
+        r["status"]: r["c"]
+        for r in conn.execute("SELECT status, COUNT(*) AS c FROM books GROUP BY status")
+    }
 
 def get_stats(conn):
     total = conn.execute("SELECT COUNT(*) AS c FROM books").fetchone()["c"]
