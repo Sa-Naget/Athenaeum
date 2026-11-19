@@ -198,7 +198,7 @@ def _fts_query(raw):
 
 def search_books(conn, search_query):
     query = """
-        SELECT b.id, b.title, a.name AS author, b.status, b.rating,
+        SELECT b.id, b.title, b.isbn, b.cover_filename, a.name AS author, b.status, b.rating,
                GROUP_CONCAT(DISTINCT t.name) AS tags
         FROM books_fts
         JOIN books b ON books_fts.rowid = b.id
