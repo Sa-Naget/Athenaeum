@@ -103,7 +103,7 @@ def index():
     tag = request.args.get("tag") or None
     search = request.args.get("q") or None
     books = fetch_books(db, status=status, tag=tag, search=search)
-    all_tags = [r["name"] for r in db.execute("SELECT name FROM tags ORDER BY name")]
+    all_tags = core_db.all_tags(db)
     counts = {
         row["status"]: row["c"]
         for row in db.execute("SELECT status, COUNT(*) AS c FROM books GROUP BY status")
@@ -214,52 +214,28 @@ def edit_book(book_id):
 
 @app.route("/books/<int:book_id>/status", methods=["POST"])
 def update_status(book_id):
-    db = get_db()
-    new_status = request.form["status"]
-    finished_clause = ", finished_date = datetime('now')" if new_status == "read" else ""
-    db.execute(f"UPDATE books SET status = ?{finished_clause} WHERE id = ?", (new_status, book_id))
-    db.commit()
+    core_db.update_status(get_db(), book_id, request.form["status"])
     return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/books/<int:book_id>/rate", methods=["POST"])
 def rate_book(book_id):
-    db = get_db()
-    rating = int(request.form["rating"])
-    db.execute("UPDATE books SET rating = ? WHERE id = ?", (rating, book_id))
-    db.commit()
+    core_db.rate_book(get_db(), book_id, int(request.form["rating"]))
     return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/books/<int:book_id>/delete", methods=["POST"])
 def delete_book(book_id):
-    db = get_db()
-    db.execute("DELETE FROM books WHERE id = ?", (book_id,))
-    db.commit()
+    core_db.delete_book(get_db(), book_id)
     return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/stats")
 def stats():
-    db = get_db()
-    total = db.execute("SELECT COUNT(*) AS c FROM books").fetchone()["c"]
-    by_status = db.execute("SELECT status, COUNT(*) AS c FROM books GROUP BY status").fetchall()
-    top_authors = db.execute(
-        """
-        SELECT a.name, COUNT(*) AS c
-        FROM books b JOIN authors a ON b.author_id = a.id
-        GROUP BY a.id ORDER BY c DESC LIMIT 5
-        """
-    ).fetchall()
-    avg_rating = db.execute(
-        "SELECT AVG(rating) AS avg_rating FROM books WHERE rating IS NOT NULL"
-    ).fetchone()["avg_rating"]
+    data = core_db.get_stats(get_db())
     return render_template(
         "status.html",
-        total=total,
-        by_status=by_status,
-        top_authors=top_authors,
-        avg_rating=avg_rating,
+        **data
     )
 
 
