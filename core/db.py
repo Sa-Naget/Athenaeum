@@ -17,15 +17,16 @@ CREATE TABLE IF NOT EXISTS authors (
 );
 
 CREATE TABLE IF NOT EXISTS books (
-    id            INTEGER PRIMARY KEY,
-    title         TEXT NOT NULL,
-    author_id     INTEGER REFERENCES authors(id),
-    isbn          TEXT,
-    status        TEXT NOT NULL DEFAULT 'want-to-read'
-                  CHECK(status IN ('want-to-read', 'reading', 'read')),
-    rating        INTEGER CHECK(rating BETWEEN 1 AND 5),
-    added_date    TEXT DEFAULT (datetime('now')),
-    finished_date TEXT
+    id              INTEGER PRIMARY KEY,
+    title           TEXT NOT NULL,
+    author_id       INTEGER REFERENCES authors(id),
+    isbn            TEXT,
+    cover_filename  TEXT,
+    status          TEXT NOT NULL DEFAULT 'want-to-read'
+                    CHECK(status IN ('want-to-read', 'reading', 'read')),
+    rating          INTEGER CHECK(rating BETWEEN 1 AND 5),
+    added_date      TEXT DEFAULT (datetime('now')),
+    finished_date   TEXT
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -72,6 +73,9 @@ def get_connection(db_path=None):
 def init_db(db_path=None):
     conn = get_connection(db_path)
     conn.executescript(SCHEMA)
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(books)")}
+    if "cover_filename" not in columns:
+        conn.execute("ALTER TABLE books ADD COLUMN cover_filename TEXT")
     conn.commit()
     conn.close()
 

@@ -1,66 +1,15 @@
 #!/usr/bin/env python3
 
 import os
-import sqlite3
+import sys
 
 from flask import Flask, g, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core import db as core_db
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "library.db")
 COVERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "covers")
 ALLOWED_COVER_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS authors (
-    id   INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS books (
-    id            INTEGER PRIMARY KEY,
-    title         TEXT NOT NULL,
-    author_id     INTEGER REFERENCES authors(id),
-    isbn          TEXT,
-    cover_filename TEXT,
-    status        TEXT NOT NULL DEFAULT 'want-to-read'
-                  CHECK(status IN ('want-to-read', 'reading', 'read')),
-    rating        INTEGER CHECK(rating BETWEEN 1 AND 5),
-    added_date    TEXT DEFAULT (datetime('now')),
-    finished_date TEXT
-);
-
-CREATE TABLE IF NOT EXISTS tags (
-    id   INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS book_tags (
-    book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
-    tag_id  INTEGER REFERENCES tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (book_id, tag_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_books_author ON books(author_id);
-CREATE INDEX IF NOT EXISTS idx_books_status ON books(status);
-
-CREATE VIRTUAL TABLE IF NOT EXISTS books_fts USING fts5(title, author_name);
-
-CREATE TRIGGER IF NOT EXISTS books_ai AFTER INSERT ON books BEGIN
-    INSERT INTO books_fts(rowid, title, author_name)
-    VALUES (new.id, new.title, (SELECT name FROM authors WHERE id = new.author_id));
-END;
-
-CREATE TRIGGER IF NOT EXISTS books_au AFTER UPDATE ON books BEGIN
-    UPDATE books_fts
-    SET title = new.title,
-        author_name = (SELECT name FROM authors WHERE id = new.author_id)
-    WHERE rowid = new.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS books_ad AFTER DELETE ON books BEGIN
-    DELETE FROM books_fts WHERE rowid = old.id;
-END;
-"""
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB cap on uploads
@@ -70,9 +19,7 @@ SPINE_COLORS = ["spine-gold", "spine-maroon", "spine-teal"]
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_FILE)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON;")
+        g.db = core_db.get_connection()
     return g.db
 
 
@@ -84,13 +31,7 @@ def close_db(exception=None):
 
 
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    conn.executescript(SCHEMA)
-    existing_columns = {row[1] for row in conn.execute("PRAGMA table_info(books)")}
-    if "cover_filename" not in existing_columns:
-        conn.execute("ALTER TABLE books ADD COLUMN cover_filename TEXT")
-    conn.commit()
-    conn.close()
+    core_db.init_db()
     os.makedirs(COVERS_DIR, exist_ok=True)
 
 
