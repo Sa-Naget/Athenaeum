@@ -29,15 +29,12 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-
 def init_db():
     core_db.init_db()
     os.makedirs(COVERS_DIR, exist_ok=True)
 
-
 def allowed_cover_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_COVER_EXTENSIONS
-
 
 def save_cover_file(file_storage, book_id):
     """Saves an uploaded cover as covers/<book_id>.<ext>, replacing any prior cover
@@ -53,33 +50,11 @@ def save_cover_file(file_storage, book_id):
     file_storage.save(os.path.join(COVERS_DIR, filename))
     return filename
 
-
 def remove_existing_cover_files(book_id):
     for ext in ALLOWED_COVER_EXTENSIONS:
         path = os.path.join(COVERS_DIR, f"{book_id}.{ext}")
         if os.path.exists(path):
             os.remove(path)
-
-
-def get_or_create_author(db, name):
-    name = name.strip()
-    if not name:
-        return None
-    row = db.execute("SELECT id FROM authors WHERE name = ?", (name,)).fetchone()
-    if row:
-        return row["id"]
-    cur = db.execute("INSERT INTO authors (name) VALUES (?)", (name,))
-    return cur.lastrowid
-
-
-def get_or_create_tag(db, name):
-    name = name.strip()
-    row = db.execute("SELECT id FROM tags WHERE name = ?", (name,)).fetchone()
-    if row:
-        return row["id"]
-    cur = db.execute("INSERT INTO tags (name) VALUES (?)", (name,))
-    return cur.lastrowid
-
 
 def fetch_books(db, status=None, tag=None, search=None):
     if search:
@@ -95,6 +70,9 @@ def fetch_books(db, status=None, tag=None, search=None):
         books.append(d)
     return books
 
+def parse_tags(raw):
+    return [t.strip() for t in raw.split(",") if t.strip()]
+
 
 @app.route("/")
 def index():
@@ -104,10 +82,7 @@ def index():
     search = request.args.get("q") or None
     books = fetch_books(db, status=status, tag=tag, search=search)
     all_tags = core_db.all_tags(db)
-    counts = {
-        row["status"]: row["c"]
-        for row in db.execute("SELECT status, COUNT(*) AS c FROM books GROUP BY status")
-    }
+    counts = core_db.status_counts(db)
     return render_template(
         "Index.html",
         books=books,
@@ -124,31 +99,17 @@ def index():
 def add_book():
     db = get_db()
     if request.method == "POST":
-        title = request.form["title"].strip()
-        author_name = request.form.get("author", "").strip()
-        isbn = request.form.get("isbn", "").strip() or None
-        status = request.form.get("status", "want-to-read")
-        tags_raw = request.form.get("tags", "")
-
-        author_id = get_or_create_author(db, author_name) if author_name else None
-        cur = db.execute(
-            "INSERT INTO books (title, author_id, isbn, status) VALUES (?, ?, ?, ?)",
-            (title, author_id, isbn, status),
+        book_id = core_db.add_book(
+            db,
+            request.form["title"].strip(),
+            request.form.get("author", "").strip(),
+            request.form.get("isbn", "").strip() or None,
+            request.form.get("status", "reading"),
+            parse_tags(request.form.get("tags", "")),
         )
-        book_id = cur.lastrowid
-
-        for tag_name in [t.strip() for t in tags_raw.split(",") if t.strip()]:
-            tag_id = get_or_create_tag(db, tag_name)
-            db.execute(
-                "INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)",
-                (book_id, tag_id),
-            )
-
         cover_filename = save_cover_file(request.files.get("cover"), book_id)
         if cover_filename:
-            db.execute("UPDATE books SET cover_filename = ? WHERE id = ?", (cover_filename, book_id))
-
-        db.commit()
+            core_db.set_cover(db, book_id, cover_filename)
         return redirect(url_for("index"))
 
     return render_template("add-book.html")
@@ -159,57 +120,32 @@ def edit_book(book_id):
     db = get_db()
 
     if request.method == "POST":
-        title = request.form["title"].strip()
-        author_name = request.form.get("author", "").strip()
-        isbn = request.form.get("isbn", "").strip() or None
-        status = request.form.get("status", "want-to-read")
         rating = request.form.get("rating") or None
-        tags_raw = request.form.get("tags", "")
-
-        author_id = get_or_create_author(db, author_name) if author_name else None
-        finished_clause = ", finished_date = datetime('now')" if status == "read" else ""
-        db.execute(
-            f"UPDATE books SET title = ?, author_id = ?, isbn = ?, status = ?, rating = ?{finished_clause} WHERE id = ?",
-            (title, author_id, isbn, status, int(rating) if rating else None, book_id),
+        core_db.update_book(
+            db,
+            book_id,
+            request.form["title"].strip(),
+            request.form.get("author", "").strip(),
+            request.form.get("isbn", "").strip() or None,
+            request.form.get("status", "reading"),
+            int(rating) if rating else None,
+            parse_tags(request.form.get("tags", "")),
         )
-
-        db.execute("DELETE FROM book_tags WHERE book_id = ?", (book_id,))
-        for tag_name in [t.strip() for t in tags_raw.split(",") if t.strip()]:
-            tag_id = get_or_create_tag(db, tag_name)
-            db.execute(
-                "INSERT OR IGNORE INTO book_tags (book_id, tag_id) VALUES (?, ?)",
-                (book_id, tag_id),
-            )
 
         if request.form.get("remove_cover"):
             remove_existing_cover_files(book_id)
-            db.execute("UPDATE books SET cover_filename = NULL WHERE id = ?", (book_id,))
+            core_db.set_cover(db, book_id, None)
         else:
             cover_filename = save_cover_file(request.files.get("cover"), book_id)
             if cover_filename:
-                db.execute("UPDATE books SET cover_filename = ? WHERE id = ?", (cover_filename, book_id))
-
-        db.commit()
+                core_db.set_cover(db, book_id, cover_filename)
         return redirect(url_for("index"))
 
-    row = db.execute(
-        """
-        SELECT b.id, b.title, b.isbn, b.cover_filename, b.status, b.rating, a.name AS author
-        FROM books b LEFT JOIN authors a ON b.author_id = a.id
-        WHERE b.id = ?
-        """,
-        (book_id,),
-    ).fetchone()
-    if row is None:
+    book = core_db.get_book(db, book_id)
+    if book is None:
         return redirect(url_for("index"))
-
-    tag_names = [
-        r["name"] for r in db.execute(
-            "SELECT t.name FROM tags t JOIN book_tags bt ON t.id = bt.tag_id WHERE bt.book_id = ?",
-            (book_id,),
-        )
-    ]
-    return render_template("edit-book.html", book=row, tags=", ".join(tag_names))
+    tags = ", ".join(core_db.get_book_tags(db, book_id))
+    return render_template("edit-book.html", book=book, tags=tags)
 
 
 @app.route("/books/<int:book_id>/status", methods=["POST"])
