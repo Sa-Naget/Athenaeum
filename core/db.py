@@ -186,7 +186,7 @@ def list_books(conn, status=None, author=None, tag=None, newest_first=False):
 
 def _fts_query(raw):
     terms = [t.replace('"', '""') for t in raw.split()]
-    return " ".join(f'"{t}"' for t in terms)
+    return " ".join(f'"{t}"*' for t in terms)
 
 def search_books(conn, search_query):
     query = """
@@ -262,7 +262,7 @@ def set_cover(conn, book_id, filename):
 def get_book(conn, book_id):
     return conn.execute(
         """
-        SELECT b.id, b.title, b.isbn. b.cover_filename, b.status, b.rating, a.name AS author
+        SELECT b.id, b.title, b.isbn, b.cover_filename, b.status, b.rating, a.name AS author
         FROM books b LEFT JOIN authors a ON b.author_id = a.id
         WHERE b.id = ?
         """,
