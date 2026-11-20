@@ -41,7 +41,6 @@
     <ul class="book-list">
       {% for book in books %}
         <li class="book-card {{ book.spine }}">
-          <div class="spine-stripe"></div>
           <div class="book-body">
             <div class="book-cover">
               {% if book.cover_filename %}
@@ -65,38 +64,43 @@
               <div class="cover-fallback {{ 'show' if not book.cover_filename and not book.isbn }}">{{ book.title[0]|upper }}</div>
             </div>
             <div class="book-main">
-              <div class="book-title-row">
-                <a href="{{ url_for('edit_book', book_id=book.id) }}" class="book-title">{{ book.title }}</a>
-                <form method="post" action="{{ url_for('rate_book', book_id=book.id) }}" class="star-form">
-                  {% for i in range(5, 0, -1) %}
-                    <button type="submit" name="rating" value="{{ i }}"
-                            class="star-btn {{ 'filled' if book.rating and i <= book.rating }}"
-                            aria-label="Rate {{ i }} star{{ 's' if i > 1 }}">★</button>
-                  {% endfor %}
-                </form>
-              </div>
-              <div class="book-meta">
-                <span class="book-author">{{ book.author or "unknown author" }}</span>
-                {% if book.tags %}
-                  <span class="book-tags">
-                    {% for t in book.tags %}<span class="tag-chip small">{{ t }}</span>{% endfor %}
-                  </span>
-                {% endif %}
-              </div>
+              <a href="{{ url_for('edit_book', book_id=book.id) }}" class="book-title">{{ book.title }}</a>
+              <div class="book-author">{{ book.author or "unknown author" }}</div>
+              <form method="post" action="{{ url_for('update_status', book_id=book.id) }}" class="status-form">
+                <select name="status" class="status-pill" aria-label="Status" onchange="this.form.submit()">
+                  <option value="want-to-read" {{ 'selected' if book.status == 'want-to-read' }}>Want to read</option>
+                  <option value="reading" {{ 'selected' if book.status == 'reading' }}>Reading</option>
+                  <option value="read" {{ 'selected' if book.status == 'read' }}>Read</option>
+                </select>
+              </form>
             </div>
           </div>
+
+          {% if book.tags %}
+          <div class="book-tags">
+            {% for t in book.tags[:2] %}<span class="tag-chip small">{{ t }}</span>{% endfor %}
+            {% if book.tags|length > 2 %}<span class="tag-chip small more" title="{{ book.tags[2:]|join(', ') }}">+{{ book.tags|length - 2 }}</span>{% endif %}
+          </div>
+          {% endif %}
+
           <div class="book-actions">
-            <form method="post" action="{{ url_for('update_status', book_id=book.id) }}" class="status-form">
-              <select name="status" onchange="this.form.submit()">
-                <option value="want-to-read" {{ 'selected' if book.status == 'want-to-read' }}>Want to read</option>
-                <option value="reading" {{ 'selected' if book.status == 'reading' }}>Reading</option>
-                <option value="read" {{ 'selected' if book.status == 'read' }}>Read</option>
-              </select>
+            <form method="post" action="{{ url_for('rate_book', book_id=book.id) }}" class="star-form">
+              {% for i in range(5, 0, -1) %}
+                <button type="submit" name="rating" value="{{ i }}"
+                        class="star-btn {{ 'filled' if book.rating and i <= book.rating }}"
+                        aria-label="Rate {{ i }} star{{ 's' if i > 1 }}">★</button>
+              {% endfor %}
             </form>
-            <a href="{{ url_for('edit_book', book_id=book.id) }}" class="ghost-btn edit-link">Edit</a>
-            <form method="post" action="{{ url_for('delete_book', book_id=book.id) }}" onsubmit="return confirm('Remove this book?');">
-              <button type="submit" class="ghost-btn">Remove</button>
-            </form>
+            <span class="icon-actions">
+              <a href="{{ url_for('edit_book', book_id=book.id) }}" class="icon-btn" aria-label="Edit" title="Edit">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>
+              </a>
+              <form method="post" action="{{ url_for('delete_book', book_id=book.id) }}" onsubmit="return confirm('Remove this book?');">
+                <button type="submit" class="icon-btn danger" aria-label="Remove" title="Remove">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/><path d="M9 7V4h6v3"/></svg>
+                </button>
+              </form>
+            </span>
           </div>
         </li>
       {% endfor %}

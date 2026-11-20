@@ -37,6 +37,7 @@
         chips.appendChild(chip);
       });
       hidden.value = tags.join(', ');
+      entry.placeholder = tags.length ? '' : 'Manga, Manhwa, Manhua';
     }
 
     function add(raw) {
