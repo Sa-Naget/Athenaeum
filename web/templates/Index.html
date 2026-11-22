@@ -10,6 +10,8 @@
     </form>
   </section>
 
+  <div class="orn" aria-hidden="true"><span></span><i></i><span></span></div>
+
   <nav class="filter-tabs">
     <a href="{{ url_for('index') }}" class="{{ 'active' if not active_status }}">
       All <span class="count">{{ total }}</span>
@@ -40,7 +42,8 @@
   {% if books %}
     <ul class="book-list">
       {% for book in books %}
-        <li class="book-card {{ book.spine }}">
+        <li class="book-card {{ book.spine }} status--{{ book.status }}">
+          <span class="ribbon" aria-hidden="true"></span>
           <div class="spine-stripe"></div>
           <div class="book-body">
             <div class="book-cover">
