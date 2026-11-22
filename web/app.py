@@ -81,7 +81,7 @@ def index():
     tag = request.args.get("tag") or None
     search = request.args.get("q") or None
     books = fetch_books(db, status=status, tag=tag, search=search)
-    all_tags = core_db.all_tags(db)
+    all_tags = core_db.tag_counts(db)
     counts = core_db.status_counts(db)
     return render_template(
         "Index.html",

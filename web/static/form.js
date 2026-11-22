@@ -69,4 +69,14 @@
     entry.closest('form').addEventListener('submit', function () { add(entry.value); entry.value = ''; });
     box.addEventListener('click', function () { entry.focus(); });
   }
+
+  var toggle = document.querySelector('[data-tag-toggle]');
+  if (toggle) {
+    var row = toggle.closest('.tag-row');
+    toggle.addEventListener('click', function() {
+      var open = row.classList.toggle('open');
+      toggle.textContent = open ? toggle.dataset.less : toggle.dataset.more;
+      toggle.setAttribute('aria-expanded', open);
+    });
+  }
 })();

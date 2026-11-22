@@ -26,15 +26,21 @@
   </nav>
 
   {% if all_tags %}
-  <div class="tag-row">
-    <span class="tag-row-label">tags:</span>
-    {% for t in all_tags %}
-      <a href="{{ url_for('index', tag=t) }}" class="tag-chip {{ 'active' if active_tag == t }}">{{ t }}</a>
-    {% endfor %}
-    {% if active_tag %}
-      <a href="{{ url_for('index') }}" class="tag-chip clear">clear ×</a>
-    {% endif %}
-  </div>
+  {% set ns = namespace(extra=0) %}
+    <div class="tag-row">
+      <span class="tag-row-label">tags:</span>
+      {% for t in all_tags %}
+        {% set is_extra = loop.index > 8 and t.name != active_tag %}
+        {% if is_extra %}{% set ns.extra = ns.extra + 1 %}{% endif %}
+        <a href="{{ url_for('index', tag=t.name) }}" class="tag-chip {{ 'active' if active_tag == t.name }}{{ ' extra' if is_extra }}">{{ t.name }} <span class="tag-count">{{ t.c }}</span></a>
+      {% endfor %}
+      {% if ns.extra %}
+        <button type="button" class="tag-chip more-toggle" data-tag-toggle aria-expanded="false" data-more="+{{ ns.extra }} more" data-less="show less">+{{ ns.extra }} more</button>
+      {% endif %}
+      {% if active_tag %}
+        <a href="{{ url_for('index') }}" class="tag-chip clear">clear ×</a>
+      {% endif %}
+    </div>
   {% endif %}
 
   {% if books %}
@@ -107,8 +113,14 @@
     </ul>
   {% else %}
     <div class="empty-state">
-      <p>Nothing here yet.</p>
-      <a href="{{ url_for('add_book') }}" class="cta-link">Add your first book →</a>
+      {% if search or active_status or active_tag %}
+        <p>Nothing matches that (｡•́︿•̀｡)</p>
+        <a href="{{ url_for('index') }}" class="cta-link">Maybe look for something else?</a>
+      {% else %}
+        <p>? Don't think you have read any book like that.. yet.</p>
+        <p>Have you read them? Or do you find one you intersted in?</p>
+        <a href="{{ url_for('add_book') }}" class="cta-link">Wanna add them?</a>
+      {% endif %}
     </div>
   {% endif %}
 {% endblock %}
