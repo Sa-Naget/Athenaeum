@@ -95,7 +95,7 @@ def get_or_create_author(conn, name):
 
 def get_or_create_tag(conn, name):
     name = name.strip()
-    row = conn.execute("SELECT id FROM tags WHERE name = ?", (name,)).fetchone()
+    row = conn.execute("SELECT id FROM tags WHERE name = ? COLLATE NOCASE", (name,)).fetchone()
     if row:
         return row["id"]
     cur = conn.execute("INSERT INTO tags (name) VALUES (?)", (name,))
@@ -158,7 +158,7 @@ def tag_book(conn, book_id, tag_name):
 def untag_book(conn, book_id, tag_name):
     cur = conn.execute(
         "DELETE FROM book_tags WHERE book_id = ? "
-        "AND tag_id = (SELECT id FROM tags WHERE name = ?)",
+        "AND tag_id = (SELECT id FROM tags WHERE name = ? COLLATE NOCASE)",
         (book_id, tag_name.strip()),
     )
     conn.commit()
@@ -217,6 +217,17 @@ def search_books(conn, search_query):
 
 def all_tags(conn):
     return [r["name"] for r in conn.execute("SELECT name FROM tags ORDER BY name")]
+
+
+def tag_counts(conn):
+    return conn.execute(
+        """
+        SELECT t.name, COUNT(bt.book_id) AS c
+        FROM tags t JOIN book_tags bt ON bt.tag_id = t.id
+        GROUP BY t.id
+        ORDER BY c DESC, t.name COLLATE NOCASE
+        """
+    ).fetchall()
 
 
 def _apply_status(conn, book_id, status):
